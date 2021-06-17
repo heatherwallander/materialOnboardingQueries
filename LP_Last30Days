@@ -15,7 +15,7 @@ accts AS (
 )
 SELECT
     forMessage.json.acctId,
-    accts.acctEmail AS acctEmail,
+    accts.acctEmail AS retrievedBy,
     forMessage.json.messageId,
     forMessage.json.subject,
     forMessage.json.date AS messageDate,
