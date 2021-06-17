@@ -17,9 +17,9 @@ SELECT
     forMessage.json.acctId,
     accts.acctEmail AS retrievedBy,
     forMessage.json.messageId,
-    forMessage.json.subject,
+    forMessage.json.subject AS messageSubject,
     forMessage.json.date AS messageDate,
-    retrieval.retrieval.approvedAt as RetrieveDate,
+    retrieval.retrieval.approvedAt AS RetrieveDate,
 
 FROM retrievalEvents
 LEFT JOIN accts
