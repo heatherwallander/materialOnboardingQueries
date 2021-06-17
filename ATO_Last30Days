@@ -1,0 +1,33 @@
+-- Generate a list of all ATO retrievals for an account.
+-- Removed duplicates for materialsecurity-atobuffer@renzuinc.co (by acctId)
+
+WITH
+purgEvents AS (
+    SELECT
+        timestamp,
+        forMessage,
+        purgatory
+    FROM `stellarite_default_prod.TrapdoorEvent_purgatory_*`
+    ORDER BY timestamp
+),
+accts AS (
+    SELECT acctId, acctEmail
+    -- This table is ephemeral, you may need to change the suffix to be the most recent timestamp
+    FROM `stellardemo-renzu-gsuite.stellarite_snapshot_prod.Acct_10_1b8c7d5067a539ed` 
+)
+SELECT
+    forMessage.json.acctId,
+    ANY_VALUE(accts.acctEmail) AS acctEmail,
+    forMessage.json.messageId,
+    ANY_VALUE(forMessage.json.date) AS messageDate,
+    ANY_VALUE(purgatory.challenge.cause.serviceId) AS serviceId,
+    ANY_VALUE(purgatory.challenge.cause.reason) AS messageType,
+    MIN(purgatory.challenge.issuedAt) AS issuedAt,
+    MIN(purgatory.challenge.approvedAt) AS approvedAt,
+    MIN(purgatory.challenge.rejectedAt) AS rejectedAt
+FROM purgEvents
+LEFT JOIN accts
+ON forMessage.json.acctId = accts.acctId
+WHERE purgatory.challenge.lastStub.hId IS NOT NULL AND forMessage.json.acctId != '113643534757358518064' AND (DATE(purgatory.challenge.issuedAt) > DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY))
+GROUP BY forMessage.json.acctId, forMessage.json.messageId
+ORDER BY issuedAt
