@@ -1,0 +1,31 @@
+-- Count of Password Reset Emails by User and Service
+-- Including counts of approved, rejected and ignored
+WITH
+purgEvents AS (
+    SELECT
+        timestamp,
+        forMessage,
+        purgatory
+    FROM `stellarite_default_prod.TrapdoorEvent_purgatory_*`
+    WHERE purgatory.challenge.cause.reason = 'account-reset'
+    ORDER BY timestamp
+),
+accts AS (
+    SELECT acctId, acctEmail
+    -- This table is ephemeral, you may need to change the suffix to be the most recent timestamp
+    FROM `stellardemo-renzu-gsuite.stellarite_snapshot_prod.Acct_10_1b8c7d5067a539ed` 
+)
+SELECT
+    forMessage.json.acctId as Account,
+    ANY_VALUE(accts.acctEmail) AS Recipient,
+    ANY_VALUE(purgatory.challenge.cause.serviceId) AS Service,
+    COUNT(DISTINCT forMessage.json.messageId) AS MsgCount,
+    COUNT(purgatory.challenge.approvedAt) AS Approved,
+    COUNT(purgatory.challenge.rejectedAt) AS Rejected,
+    COUNT(DISTINCT forMessage.json.messageId) - (COUNT(purgatory.challenge.approvedAt) + COUNT(purgatory.challenge.rejectedAt)) AS Ignored
+FROM purgEvents
+LEFT JOIN accts
+ON forMessage.json.acctId = accts.acctId
+WHERE purgatory.challenge.lastStub.hId IS NOT NULL AND forMessage.json.acctId != '113643534757358518064' AND (DATE(purgatory.challenge.issuedAt) > DATE_SUB(CURRENT_DATE(), INTERVAL 1 YEAR))
+GROUP BY forMessage.json.acctId, purgatory.challenge.cause.serviceId
+ORDER BY MsgCount desc
