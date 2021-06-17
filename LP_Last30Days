@@ -9,7 +9,7 @@ retrievalEvents AS (
     FROM `stellarite_default_prod.TrapdoorEvent_retrieval_*`
 ),
 accts AS (
-    SELECT *
+    SELECT acctId, acctEmail
     -- This table is ephemeral, you may need to change the suffix to be the most recent timestamp
     FROM `stellardemo-renzu-gsuite.stellarite_snapshot_prod.Acct_10_1b8c7d5067a539ed` 
 )
