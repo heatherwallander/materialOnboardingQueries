@@ -1,0 +1,28 @@
+-- Lists email data for LP retrievals approved in the last 30 days
+WITH
+retrievalEvents AS (
+    SELECT
+        timestamp,
+        forMessage,
+        retrieval,
+
+    FROM `stellarite_default_prod.TrapdoorEvent_retrieval_*`
+),
+accts AS (
+    SELECT *
+    -- This table is ephemeral, you may need to change the suffix to be the most recent timestamp
+    FROM `stellardemo-renzu-gsuite.stellarite_snapshot_prod.Acct_10_1b8c7d5067a539ed` 
+)
+SELECT
+    forMessage.json.acctId,
+    accts.acctEmail AS acctEmail,
+    forMessage.json.messageId,
+    forMessage.json.subject,
+    forMessage.json.date AS messageDate,
+    retrieval.retrieval.approvedAt as RetrieveDate,
+
+FROM retrievalEvents
+LEFT JOIN accts
+ON forMessage.json.acctId = accts.acctId
+WHERE DATE(retrieval.retrieval.approvedAt) > DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
+ORDER BY RetrieveDate
