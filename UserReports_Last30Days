@@ -1,0 +1,11 @@
+SELECT
+    forMessage.json.messageId,
+    forMessage.json.subject,
+    suspicious.userReport.labelName AS suspiciousLabel,
+    JSON_EXTRACT(TO_JSON_STRING(suspicious.userReport.forwardedToAddrGlobs),'$[0]') AS suspiciousForwarded,
+    forMessage.json.date AS messageDate
+FROM `stellardemo-renzu-gsuite.stellarite_default_prod.TrapdoorEvent_msgSuspiciousMarks_*`,
+UNNEST(msgSuspiciousMarks.suspicious.added) as suspicious
+WHERE (suspicious.userReport.labelName is NOT NULL OR ARRAY_LENGTH(suspicious.userReport.forwardedToAddrGlobs) > 0) AND
+(DATE(forMessage.json.date) > DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY))
+ORDER BY messageDate
