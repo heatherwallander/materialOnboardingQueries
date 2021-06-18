@@ -1,6 +1,9 @@
+-- List of emails marked as suspicious by users
+
 SELECT
     forMessage.json.messageId,
     forMessage.json.subject,
+    suspicious.markedBy.isAdmin reportedByAdmin,
     suspicious.userReport.labelName AS suspiciousLabel,
     JSON_EXTRACT(TO_JSON_STRING(suspicious.userReport.forwardedToAddrGlobs),'$[0]') AS suspiciousForwarded,
     forMessage.json.date AS messageDate
