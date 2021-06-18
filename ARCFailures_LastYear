@@ -1,0 +1,17 @@
+-- Lists counts for all messages that have failed DMARC, SPF or DKIM by domain
+WITH
+messages AS (
+    SELECT
+        message,
+    FROM `stellarite_default_prod.MessageUpdate_202*`
+)
+SELECT
+    REGEXP_EXTRACT(message.from, r'^[a-zA-Z0-9_.+-]+@([a-zA-Z0-9-.]+$)') AS domain,
+    COUNTIF(message.dmarc = 'fail') AS DMARC_Failure_Count,
+    COUNTIF(message.spf = 'fail') AS SPF_Failure_Count,
+    COUNTIF(message.dkim = 'fail') AS DKIM_Failure_Count
+FROM messages
+WHERE (DATE(message.date) > DATE_SUB(CURRENT_DATE(), INTERVAL 1 YEAR)) AND (message.dmarc = 'fail' OR message.spf = 'fail' OR message.dkim = 'fail')
+GROUP BY domain
+ORDER BY DMARC_Failure_Count desc, SPF_Failure_Count desc, DKIM_Failure_Count desc
+
